@@ -1,0 +1,18 @@
+.data
+graxa: .word 0
+.text
+j main
+
+fun_soma:
+	mv t0, a0
+	mv t1, a1
+	add t2, t0, t1
+	mv a0, t2
+	ret
+
+main:
+	li a0, 4
+	li a1, 9
+	call fun_soma
+	la t0, graxa
+	sw a0, (t0)

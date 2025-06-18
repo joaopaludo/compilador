@@ -1,0 +1,17 @@
+int x = (3 + 1) * 2;
+
+int y = x + 1;
+
+int i = 0;
+
+while (i < 4) {
+    i = i + 1;
+}
+
+int function soma(int a, int b) {
+    return a + b;
+}
+
+int graxa = soma(4, 9);
+
+int[] vetor = [1, 2, 3];

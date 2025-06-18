@@ -1,0 +1,10 @@
+function fibonacci:
+t0 = n
+t1 = 1
+t2 = t0 <= t1
+ifFalse t2 goto L1
+L1:
+t0 = 3
+param t0
+t1 = call fibonacci
+a = t1
