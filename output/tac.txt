@@ -1,10 +1,18 @@
-function fibonacci:
-t0 = n
-t1 = 1
-t2 = t0 <= t1
-ifFalse t2 goto L1
+function funcao:
+t0 = 0
+i = t0
 L1:
+t0 = i
+t1 = n
+t2 = t0 <= t1
+ifFalse t2 goto L2
+t0 = i
+t1 = 1
+t2 = t0 + t1
+i = t2
+goto L1
+L2:
 t0 = 3
 param t0
-t1 = call fibonacci
-a = t1
+t1 = call funcao
+x = t1

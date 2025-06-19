@@ -1,17 +1,37 @@
 .data
-a: .word 0
+i: .word 0
+x: .word 0
 .text
 j main
-fun_fibonacci:
+fun_funcao:
 	mv t0, a0
-	mv t1, a1
-	add t2, t0, t1
-	mv a0, t2
+	li t1, 0
+	la t2, i
+	sw t1, (t2)
+label_0:
+	la t1, i
+	lw t2, (t1)
+	la t3, n
+	lw t1, (t3)
+	slt t3, t1, t2
+	xori t3, t3, 1
+	beqz t3, label_1
+	la t1, i
+	lw t2, (t1)
+	li t3, 1
+	add t1, t2, t3
+	la t2, i
+	sw t1, (t2)
+	j label_0
+label_1:
+	la t2, i
+	lw t3, (t2)
+	mv a0, t3
 	ret
 main:
 	li t0, 3
 	mv a0, t0
-	call fun_fibonacci
+	call fun_funcao
 	mv t0, a0
-	la t1, a
+	la t1, x
 	sw t0, (t1)

@@ -6,7 +6,7 @@ programa
       KEYWORD
         function
       IDENTIFIER
-        fibonacci
+        funcao
       SYMBOL
         (
       parametros
@@ -20,30 +20,51 @@ programa
         SYMBOL
           {
         declaracao
-          declaracaoIf
+          declaracaoVariavel
+            TYPE
+              int
+            IDENTIFIER
+              i
+            OPERATOR
+              =
+            expressao
+              termo
+                INTEGER
+                  0
+            SYMBOL
+              ;
+        declaracao
+          declaracaoWhile
             KEYWORD
-              if
+              while
             SYMBOL
               (
             expressao
               termo
                 IDENTIFIER
-                  n
+                  i
               OPERATOR
                 <=
               termo
-                INTEGER
-                  1
+                IDENTIFIER
+                  n
             SYMBOL
               )
             bloco
               SYMBOL
                 {
               declaracao
-                declaracaoReturn
-                  KEYWORD
-                    return
+                atribuicao
+                  IDENTIFIER
+                    i
+                  OPERATOR
+                    =
                   expressao
+                    termo
+                      IDENTIFIER
+                        i
+                    OPERATOR
+                      +
                     termo
                       INTEGER
                         1
@@ -57,43 +78,8 @@ programa
               return
             expressao
               termo
-                chamadaFuncao
-                  IDENTIFIER
-                    fibonacci
-                  SYMBOL
-                    (
-                  argumentos
-                    expressao
-                      termo
-                        IDENTIFIER
-                          n
-                      OPERATOR
-                        -
-                      termo
-                        INTEGER
-                          1
-                  SYMBOL
-                    )
-              OPERATOR
-                +
-              termo
-                chamadaFuncao
-                  IDENTIFIER
-                    fibonacci
-                  SYMBOL
-                    (
-                  argumentos
-                    expressao
-                      termo
-                        IDENTIFIER
-                          n
-                      OPERATOR
-                        -
-                      termo
-                        INTEGER
-                          2
-                  SYMBOL
-                    )
+                IDENTIFIER
+                  i
             SYMBOL
               ;
         SYMBOL
@@ -103,14 +89,14 @@ programa
       TYPE
         int
       IDENTIFIER
-        a
+        x
       OPERATOR
         =
       expressao
         termo
           chamadaFuncao
             IDENTIFIER
-              fibonacci
+              funcao
             SYMBOL
               (
             argumentos

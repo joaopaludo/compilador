@@ -81,9 +81,13 @@ export function gerarAssembly(no: TreeNode): string[] {
 
                         const novoReg = novoRegistrador();
                         if (operador === "*") {
-                            codigo.push(`\tmul ${novoReg}, ${reg}, ${proximoResultado.reg}`);
+                            codigo.push(
+                                `\tmul ${novoReg}, ${reg}, ${proximoResultado.reg}`
+                            );
                         } else if (operador === "/") {
-                            codigo.push(`\tdiv ${novoReg}, ${reg}, ${proximoResultado.reg}`);
+                            codigo.push(
+                                `\tdiv ${novoReg}, ${reg}, ${proximoResultado.reg}`
+                            );
                         }
 
                         liberarRegistrador(reg);
@@ -111,13 +115,21 @@ export function gerarAssembly(no: TreeNode): string[] {
 
                     const novoReg = novoRegistrador();
                     if (operador === "+") {
-                        codigo.push(`\tadd ${novoReg}, ${reg}, ${proximoResultado.reg}`);
+                        codigo.push(
+                            `\tadd ${novoReg}, ${reg}, ${proximoResultado.reg}`
+                        );
                     } else if (operador === "-") {
-                        codigo.push(`\tsub ${novoReg}, ${reg}, ${proximoResultado.reg}`);
+                        codigo.push(
+                            `\tsub ${novoReg}, ${reg}, ${proximoResultado.reg}`
+                        );
                     } else if (operador === "<") {
-                        codigo.push(`\tslt ${novoReg}, ${reg}, ${proximoResultado.reg}`);
+                        codigo.push(
+                            `\tslt ${novoReg}, ${reg}, ${proximoResultado.reg}`
+                        );
                     } else if (operador === ">") {
-                        codigo.push(`\tslt ${novoReg}, ${proximoResultado.reg}, ${reg}`);
+                        codigo.push(
+                            `\tslt ${novoReg}, ${proximoResultado.reg}, ${reg}`
+                        );
                     } else if (operador === "<=") {
                         codigo.push(
                             `\tslt ${novoReg}, ${proximoResultado.reg}, ${reg}`,
@@ -182,24 +194,33 @@ export function gerarAssembly(no: TreeNode): string[] {
                 if (identificador) {
                     codigo.push(`fun_${identificador}:`);
 
-                    // Move os argumentos para registradores temporários
-                    const t0 = novoRegistrador();
-                    const t1 = novoRegistrador();
-                    codigo.push(`\tmv ${t0}, a0`, `\tmv ${t1}, a1`);
+                    const parametros = declaracao.filhos.find(
+                        (f) => f.nome === "parametros"
+                    );
 
-                    // Gera o add diretamente para a função soma
-                    const t2 = novoRegistrador();
-                    codigo.push(`\tadd ${t2}, ${t0}, ${t1}`);
-                    codigo.push(`\tmv a0, ${t2}`);
-                    liberarRegistrador(t2);
+                    let parametrosRegistradores: string[] = [];
+                    if (parametros) {
+                        parametrosRegistradores = parametros.filhos
+                            .filter((f) => f.nome === "IDENTIFIER")
+                            .map((_, i) => {
+                                const reg = novoRegistrador();
+                                codigo.push(`\tmv ${reg}, a${i}`);
 
-                    liberarRegistrador(t0);
-                    liberarRegistrador(t1);
-                    codigo.push(`\tret`);
+                                return reg;
+                            });
+                    }
+
+                    gerarBloco(bloco!);
+
+                    parametrosRegistradores.forEach((reg) => {
+                        liberarRegistrador(reg);
+                    });
                 }
             } else if (declaracao.nome === "declaracaoWhile") {
-                const expressao = declaracao.filhos.find(f => f.nome === "expressao");
-                const bloco = declaracao.filhos.find(f => f.nome === "bloco");
+                const expressao = declaracao.filhos.find(
+                    (f) => f.nome === "expressao"
+                );
+                const bloco = declaracao.filhos.find((f) => f.nome === "bloco");
 
                 if (expressao && bloco) {
                     const inicioLabel = novoLabel();
@@ -227,8 +248,20 @@ export function gerarAssembly(no: TreeNode): string[] {
                     codigo.push(`${fimLabel}:`);
                 }
             } else if (declaracao.nome === "atribuicao") {
-                const identificador = declaracao.filhos.find(f => f.nome === "IDENTIFIER")?.filhos[0].nome;
-                const expressao = declaracao.filhos.find(f => f.nome === "expressao");
+                const identificador = declaracao.filhos.find(
+                    (f) => f.nome === "IDENTIFIER"
+                )?.filhos[0].nome;
+                const expressao = declaracao.filhos.find(
+                    (f) => f.nome === "expressao"
+                );
+
+                // TODO
+                // verificar se o identificador aqui é um parâmetro de função
+                // se for, não deve carregar do endereço, mas usar o a0, a1, etc.
+                if (!variaveisDeclaradas.has(identificador!) && identificador) {
+                    // verificar o no pai do pai do pai... se é uma função
+                    // se for, não deve usar a variável, mas usar o registrador a0, a1, etc.
+                }
 
                 if (identificador && expressao) {
                     const resultado = gerarExpressao(expressao);
@@ -242,6 +275,45 @@ export function gerarAssembly(no: TreeNode): string[] {
                     liberarRegistrador(enderecoReg);
                     liberarRegistrador(resultado.reg);
                 }
+            } else if (declaracao.nome === "declaracaoIf") {
+                const expressao = declaracao.filhos.find(
+                    (f) => f.nome === "expressao"
+                );
+                const bloco = declaracao.filhos.find((f) => f.nome === "bloco");
+
+                if (expressao && bloco) {
+                    const fimLabel = novoLabel();
+
+                    // Gera a condição
+                    const resultadoCondicao = gerarExpressao(expressao);
+                    codigo.push(...resultadoCondicao.codigo);
+
+                    // Se a condição for falsa (0), pula para o fim
+                    codigo.push(`\tbeqz ${resultadoCondicao.reg}, ${fimLabel}`);
+                    liberarRegistrador(resultadoCondicao.reg);
+
+                    // Gera o corpo do if
+                    gerarBloco(bloco);
+
+                    // Label de fim do if
+                    codigo.push(`${fimLabel}:`);
+                }
+            } else if (declaracao.nome === "declaracaoReturn") {
+                const expressao = declaracao.filhos.find(
+                    (f) => f.nome === "expressao"
+                );
+
+                if (expressao) {
+                    const resultado = gerarExpressao(expressao);
+                    codigo.push(...resultado.codigo);
+
+                    // Move o resultado para a0 (registrador de retorno)
+                    codigo.push(`\tmv a0, ${resultado.reg}`);
+                    liberarRegistrador(resultado.reg);
+                }
+
+                // Retorna da função
+                codigo.push(`\tret`);
             }
         }
     }
@@ -300,7 +372,7 @@ export function gerarAssembly(no: TreeNode): string[] {
         }
 
         // Verifica se o termo contém uma expressão (parênteses)
-        const expressao = no.filhos.find(f => f.nome === "expressao");
+        const expressao = no.filhos.find((f) => f.nome === "expressao");
         if (expressao) {
             return gerarExpressao(expressao);
         }
@@ -326,8 +398,9 @@ export function gerarAssembly(no: TreeNode): string[] {
         let reg = "";
 
         if (no.nome === "comparacao") {
-            const operador = no.filhos.find(f => f.nome === "OPERATOR")?.filhos[0].nome;
-            const expressoes = no.filhos.filter(f => f.nome === "expressao");
+            const operador = no.filhos.find((f) => f.nome === "OPERATOR")
+                ?.filhos[0].nome;
+            const expressoes = no.filhos.filter((f) => f.nome === "expressao");
 
             if (expressoes.length === 2 && operador) {
                 const resultado1 = gerarExpressao(expressoes[0]);
@@ -339,20 +412,32 @@ export function gerarAssembly(no: TreeNode): string[] {
                 reg = novoRegistrador();
 
                 if (operador === "<") {
-                    codigo.push(`\tslt ${reg}, ${resultado1.reg}, ${resultado2.reg}`);
+                    codigo.push(
+                        `\tslt ${reg}, ${resultado1.reg}, ${resultado2.reg}`
+                    );
                 } else if (operador === ">") {
-                    codigo.push(`\tslt ${reg}, ${resultado2.reg}, ${resultado1.reg}`);
+                    codigo.push(
+                        `\tslt ${reg}, ${resultado2.reg}, ${resultado1.reg}`
+                    );
                 } else if (operador === "<=") {
-                    codigo.push(`\tslt ${reg}, ${resultado2.reg}, ${resultado1.reg}`);
+                    codigo.push(
+                        `\tslt ${reg}, ${resultado2.reg}, ${resultado1.reg}`
+                    );
                     codigo.push(`\txori ${reg}, ${reg}, 1`);
                 } else if (operador === ">=") {
-                    codigo.push(`\tslt ${reg}, ${resultado1.reg}, ${resultado2.reg}`);
+                    codigo.push(
+                        `\tslt ${reg}, ${resultado1.reg}, ${resultado2.reg}`
+                    );
                     codigo.push(`\txori ${reg}, ${reg}, 1`);
                 } else if (operador === "==") {
-                    codigo.push(`\tsub ${reg}, ${resultado1.reg}, ${resultado2.reg}`);
+                    codigo.push(
+                        `\tsub ${reg}, ${resultado1.reg}, ${resultado2.reg}`
+                    );
                     codigo.push(`\tsltiu ${reg}, ${reg}, 1`);
                 } else if (operador === "!=") {
-                    codigo.push(`\tsub ${reg}, ${resultado1.reg}, ${resultado2.reg}`);
+                    codigo.push(
+                        `\tsub ${reg}, ${resultado1.reg}, ${resultado2.reg}`
+                    );
                     codigo.push(`\tsltu ${reg}, zero, ${reg}`);
                 }
 
@@ -366,8 +451,8 @@ export function gerarAssembly(no: TreeNode): string[] {
 
     function gerarWhile(no: TreeNode) {
         if (no.nome === "while") {
-            const condicao = no.filhos.find(f => f.nome === "comparacao");
-            const bloco = no.filhos.find(f => f.nome === "bloco");
+            const condicao = no.filhos.find((f) => f.nome === "comparacao");
+            const bloco = no.filhos.find((f) => f.nome === "bloco");
 
             if (condicao && bloco) {
                 const inicioLabel = novoLabel();
@@ -398,8 +483,9 @@ export function gerarAssembly(no: TreeNode): string[] {
 
     function gerarAtribuicao(no: TreeNode) {
         if (no.nome === "atribuicao") {
-            const identificador = no.filhos.find(f => f.nome === "IDENTIFIER")?.filhos[0].nome;
-            const expressao = no.filhos.find(f => f.nome === "expressao");
+            const identificador = no.filhos.find((f) => f.nome === "IDENTIFIER")
+                ?.filhos[0].nome;
+            const expressao = no.filhos.find((f) => f.nome === "expressao");
 
             if (identificador && expressao) {
                 const resultado = gerarExpressao(expressao);
@@ -448,6 +534,8 @@ export function gerarAssembly(no: TreeNode): string[] {
     labelCounter = 0;
 
     for (const filho of no.filhos) {
+        console.dir(filho, { depth: null });
+
         if (
             filho.nome === "declaracao" &&
             filho.filhos[0].nome === "declaracaoVariavel"
@@ -458,6 +546,11 @@ export function gerarAssembly(no: TreeNode): string[] {
             filho.filhos[0].nome === "declaracaoWhile"
         ) {
             gerarDeclaracao(filho);
+        } else if (
+            filho.nome === "declaracao" &&
+            filho.filhos[0].nome === "chamadaFuncao"
+        ) {
+            gerarChamadaFuncao(filho);
         }
     }
 
