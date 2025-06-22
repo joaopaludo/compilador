@@ -2,4 +2,4 @@ int function funcao(int n, int m) {
     return n * m;
 }
 
-int x = funcao(2, 3);
+int x = funcao(2, 3) + funcao(1, 2);
