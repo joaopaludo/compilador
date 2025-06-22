@@ -2,7 +2,12 @@
 
 let registradorAtual = 0;
 let registradoresLivres: number[] = [];
+let argumentoAtual = 0;
+let argumentosLivres: number[] = [];
 let labelCounter = 0;
+
+// Mapa para rastrear parâmetros da função atual
+let parametrosFuncaoAtual = new Map<string, string>();
 
 function novoRegistrador(): string {
     if (registradoresLivres.length > 0) {
@@ -15,6 +20,20 @@ function liberarRegistrador(reg: string) {
     const num = parseInt(reg.substring(1));
     if (num >= 0) {
         registradoresLivres.push(num);
+    }
+}
+
+function novoArgumento(): string {
+    if (argumentosLivres.length > 0) {
+        return `a${argumentosLivres.shift()!}`;
+    }
+    return `a${argumentoAtual++}`;
+}
+
+function liberarArgumento(reg: string) {
+    const num = parseInt(reg.substring(1));
+    if (num >= 0) {
+        argumentosLivres.push(num);
     }
 }
 
@@ -198,23 +217,45 @@ export function gerarAssembly(no: TreeNode): string[] {
                         (f) => f.nome === "parametros"
                     );
 
+                    // Limpa o mapa de parâmetros da função anterior
+                    parametrosFuncaoAtual.clear();
+
                     let parametrosRegistradores: string[] = [];
+                    let parametrosArgumentos: string[] = [];
                     if (parametros) {
-                        parametrosRegistradores = parametros.filhos
+                        const nomesParametros = parametros.filhos
                             .filter((f) => f.nome === "IDENTIFIER")
-                            .map((_, i) => {
+                            .map((f) => f.filhos[0].nome);
+
+                        parametrosRegistradores = nomesParametros.map(
+                            (nomeParametro) => {
                                 const reg = novoRegistrador();
-                                codigo.push(`\tmv ${reg}, a${i}`);
+                                const arg = novoArgumento();
+                                codigo.push(`\tmv ${reg}, ${arg}`);
+
+                                parametrosArgumentos.push(arg);
+
+                                // Mapeia o nome do parâmetro para o registrador
+                                parametrosFuncaoAtual.set(nomeParametro, reg);
 
                                 return reg;
-                            });
+                            }
+                        );
                     }
 
                     gerarBloco(bloco!);
 
+                    // Libera os registradores dos parâmetros
                     parametrosRegistradores.forEach((reg) => {
                         liberarRegistrador(reg);
                     });
+
+                    parametrosArgumentos.forEach((arg) => {
+                        liberarArgumento(arg);
+                    });
+
+                    // Limpa o mapa de parâmetros ao sair da função
+                    parametrosFuncaoAtual.clear();
                 }
             } else if (declaracao.nome === "declaracaoWhile") {
                 const expressao = declaracao.filhos.find(
@@ -254,14 +295,6 @@ export function gerarAssembly(no: TreeNode): string[] {
                 const expressao = declaracao.filhos.find(
                     (f) => f.nome === "expressao"
                 );
-
-                // TODO
-                // verificar se o identificador aqui é um parâmetro de função
-                // se for, não deve carregar do endereço, mas usar o a0, a1, etc.
-                if (!variaveisDeclaradas.has(identificador!) && identificador) {
-                    // verificar o no pai do pai do pai... se é uma função
-                    // se for, não deve usar a variável, mas usar o registrador a0, a1, etc.
-                }
 
                 if (identificador && expressao) {
                     const resultado = gerarExpressao(expressao);
@@ -307,7 +340,7 @@ export function gerarAssembly(no: TreeNode): string[] {
                     const resultado = gerarExpressao(expressao);
                     codigo.push(...resultado.codigo);
 
-                    // Move o resultado para a0 (registrador de retorno)
+                    // Move o resultado para registrador de retorno
                     codigo.push(`\tmv a0, ${resultado.reg}`);
                     liberarRegistrador(resultado.reg);
                 }
@@ -344,8 +377,10 @@ export function gerarAssembly(no: TreeNode): string[] {
                     })
                     .filter(Boolean);
 
-                resultados.forEach((reg, index) => {
-                    codigo.push(`\tmv a${index}, ${reg}`);
+                resultados.forEach((reg) => {
+                    const arg = novoArgumento();
+                    codigo.push(`\tmv ${arg}, ${reg}`);
+
                     liberarRegistrador(reg);
                 });
             }
@@ -356,12 +391,18 @@ export function gerarAssembly(no: TreeNode): string[] {
             // O resultado da função está em a0
             const reg = novoRegistrador();
             codigo.push(`\tmv ${reg}, a0`);
+
+            // Libera o argumento a0
+            liberarArgumento("a0");
             return { codigo, reg };
         }
         return { codigo: [], reg: "" };
     }
 
-    function gerarTermo(no: TreeNode): { codigo: string[]; reg: string } {
+    function gerarTermo(
+        no: TreeNode,
+        regParametro?: string
+    ): { codigo: string[]; reg: string } {
         const codigo: string[] = [];
         let reg = "";
 
@@ -381,13 +422,20 @@ export function gerarAssembly(no: TreeNode): string[] {
             reg = novoRegistrador();
             codigo.push(`\tli ${reg}, ${no.filhos[0].filhos[0].nome}`);
         } else if (no.filhos[0].nome === "IDENTIFIER") {
-            reg = novoRegistrador();
-            const enderecoReg = novoRegistrador();
-            codigo.push(
-                `\tla ${enderecoReg}, ${no.filhos[0].filhos[0].nome}`,
-                `\tlw ${reg}, (${enderecoReg})`
-            );
-            liberarRegistrador(enderecoReg);
+            const identificador = no.filhos[0].filhos[0].nome;
+
+            // Verifica se é um parâmetro da função atual
+            if (parametrosFuncaoAtual.has(identificador)) {
+                reg = parametrosFuncaoAtual.get(identificador)!;
+            } else if (variaveisDeclaradas.has(identificador)) {
+                reg = novoRegistrador();
+                const enderecoReg = novoRegistrador();
+                codigo.push(
+                    `\tla ${enderecoReg}, ${no.filhos[0].filhos[0].nome}`,
+                    `\tlw ${reg}, (${enderecoReg})`
+                );
+                liberarRegistrador(enderecoReg);
+            }
         }
 
         return { codigo, reg };
@@ -534,8 +582,6 @@ export function gerarAssembly(no: TreeNode): string[] {
     labelCounter = 0;
 
     for (const filho of no.filhos) {
-        console.dir(filho, { depth: null });
-
         if (
             filho.nome === "declaracao" &&
             filho.filhos[0].nome === "declaracaoVariavel"

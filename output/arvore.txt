@@ -14,64 +14,17 @@ programa
           int
         IDENTIFIER
           n
+        SYMBOL
+          ,
+        TYPE
+          int
+        IDENTIFIER
+          m
       SYMBOL
         )
       bloco
         SYMBOL
           {
-        declaracao
-          declaracaoVariavel
-            TYPE
-              int
-            IDENTIFIER
-              i
-            OPERATOR
-              =
-            expressao
-              termo
-                INTEGER
-                  0
-            SYMBOL
-              ;
-        declaracao
-          declaracaoWhile
-            KEYWORD
-              while
-            SYMBOL
-              (
-            expressao
-              termo
-                IDENTIFIER
-                  i
-              OPERATOR
-                <=
-              termo
-                IDENTIFIER
-                  n
-            SYMBOL
-              )
-            bloco
-              SYMBOL
-                {
-              declaracao
-                atribuicao
-                  IDENTIFIER
-                    i
-                  OPERATOR
-                    =
-                  expressao
-                    termo
-                      IDENTIFIER
-                        i
-                    OPERATOR
-                      +
-                    termo
-                      INTEGER
-                        1
-                  SYMBOL
-                    ;
-              SYMBOL
-                }
         declaracao
           declaracaoReturn
             KEYWORD
@@ -79,7 +32,12 @@ programa
             expressao
               termo
                 IDENTIFIER
-                  i
+                  n
+              OPERATOR
+                *
+              termo
+                IDENTIFIER
+                  m
             SYMBOL
               ;
         SYMBOL
@@ -100,6 +58,12 @@ programa
             SYMBOL
               (
             argumentos
+              expressao
+                termo
+                  INTEGER
+                    2
+              SYMBOL
+                ,
               expressao
                 termo
                   INTEGER

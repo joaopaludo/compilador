@@ -96,7 +96,7 @@ export function analiseSintatica(tokens: Token[]): [boolean, TreeNode[]] {
 
 /**
  * Verifica se a estrutura do programa está correta
- * programa -> declaracao*
+ * programa -> declaracao
  */
 const programa = (
     estado: EstadoSintatico,

@@ -1,11 +1,5 @@
-int function funcao(int n) {
-    int i = 0;
-
-    while (i <= n) {
-        i = i + 1;
-    }
-
-    return i;
+int function funcao(int n, int m) {
+    return n * m;
 }
 
-int x = funcao(3);
+int x = funcao(2, 3);

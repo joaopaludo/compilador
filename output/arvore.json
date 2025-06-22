@@ -90,6 +90,45 @@
                         "coluna": 25
                       }
                     ]
+                  },
+                  {
+                    "nome": "SYMBOL",
+                    "ordem": 2,
+                    "filhos": [
+                      {
+                        "nome": ",",
+                        "ordem": 0,
+                        "filhos": [],
+                        "linha": 1,
+                        "coluna": 26
+                      }
+                    ]
+                  },
+                  {
+                    "nome": "TYPE",
+                    "ordem": 3,
+                    "filhos": [
+                      {
+                        "nome": "int",
+                        "ordem": 0,
+                        "filhos": [],
+                        "linha": 1,
+                        "coluna": 28
+                      }
+                    ]
+                  },
+                  {
+                    "nome": "IDENTIFIER",
+                    "ordem": 4,
+                    "filhos": [
+                      {
+                        "nome": "m",
+                        "ordem": 0,
+                        "filhos": [],
+                        "linha": 1,
+                        "coluna": 32
+                      }
+                    ]
                   }
                 ]
               },
@@ -102,7 +141,7 @@
                     "ordem": 0,
                     "filhos": [],
                     "linha": 1,
-                    "coluna": 26
+                    "coluna": 33
                   }
                 ]
               },
@@ -119,340 +158,13 @@
                         "ordem": 0,
                         "filhos": [],
                         "linha": 1,
-                        "coluna": 28
+                        "coluna": 35
                       }
                     ]
                   },
                   {
                     "nome": "declaracao",
                     "ordem": 1,
-                    "filhos": [
-                      {
-                        "nome": "declaracaoVariavel",
-                        "ordem": 0,
-                        "filhos": [
-                          {
-                            "nome": "TYPE",
-                            "ordem": 0,
-                            "filhos": [
-                              {
-                                "nome": "int",
-                                "ordem": 0,
-                                "filhos": [],
-                                "linha": 2,
-                                "coluna": 5
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "IDENTIFIER",
-                            "ordem": 1,
-                            "filhos": [
-                              {
-                                "nome": "i",
-                                "ordem": 0,
-                                "filhos": [],
-                                "linha": 2,
-                                "coluna": 9
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "OPERATOR",
-                            "ordem": 2,
-                            "filhos": [
-                              {
-                                "nome": "=",
-                                "ordem": 0,
-                                "filhos": [],
-                                "linha": 2,
-                                "coluna": 11
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "expressao",
-                            "ordem": 3,
-                            "filhos": [
-                              {
-                                "nome": "termo",
-                                "ordem": 0,
-                                "filhos": [
-                                  {
-                                    "nome": "INTEGER",
-                                    "ordem": 0,
-                                    "filhos": [
-                                      {
-                                        "nome": "0",
-                                        "ordem": 0,
-                                        "filhos": [],
-                                        "linha": 2,
-                                        "coluna": 13
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "SYMBOL",
-                            "ordem": 4,
-                            "filhos": [
-                              {
-                                "nome": ";",
-                                "ordem": 0,
-                                "filhos": [],
-                                "linha": 2,
-                                "coluna": 14
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "nome": "declaracao",
-                    "ordem": 2,
-                    "filhos": [
-                      {
-                        "nome": "declaracaoWhile",
-                        "ordem": 0,
-                        "filhos": [
-                          {
-                            "nome": "KEYWORD",
-                            "ordem": 0,
-                            "filhos": [
-                              {
-                                "nome": "while",
-                                "ordem": 0,
-                                "filhos": []
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "SYMBOL",
-                            "ordem": 1,
-                            "filhos": [
-                              {
-                                "nome": "(",
-                                "ordem": 0,
-                                "filhos": [],
-                                "linha": 4,
-                                "coluna": 11
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "expressao",
-                            "ordem": 2,
-                            "filhos": [
-                              {
-                                "nome": "termo",
-                                "ordem": 0,
-                                "filhos": [
-                                  {
-                                    "nome": "IDENTIFIER",
-                                    "ordem": 0,
-                                    "filhos": [
-                                      {
-                                        "nome": "i",
-                                        "ordem": 0,
-                                        "filhos": []
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "nome": "OPERATOR",
-                                "ordem": 1,
-                                "filhos": [
-                                  {
-                                    "nome": "<=",
-                                    "ordem": 0,
-                                    "filhos": [],
-                                    "linha": 4,
-                                    "coluna": 14
-                                  }
-                                ]
-                              },
-                              {
-                                "nome": "termo",
-                                "ordem": 2,
-                                "filhos": [
-                                  {
-                                    "nome": "IDENTIFIER",
-                                    "ordem": 0,
-                                    "filhos": [
-                                      {
-                                        "nome": "n",
-                                        "ordem": 0,
-                                        "filhos": []
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "SYMBOL",
-                            "ordem": 3,
-                            "filhos": [
-                              {
-                                "nome": ")",
-                                "ordem": 0,
-                                "filhos": [],
-                                "linha": 4,
-                                "coluna": 18
-                              }
-                            ]
-                          },
-                          {
-                            "nome": "bloco",
-                            "ordem": 4,
-                            "filhos": [
-                              {
-                                "nome": "SYMBOL",
-                                "ordem": 0,
-                                "filhos": [
-                                  {
-                                    "nome": "{",
-                                    "ordem": 0,
-                                    "filhos": [],
-                                    "linha": 4,
-                                    "coluna": 20
-                                  }
-                                ]
-                              },
-                              {
-                                "nome": "declaracao",
-                                "ordem": 1,
-                                "filhos": [
-                                  {
-                                    "nome": "atribuicao",
-                                    "ordem": 0,
-                                    "filhos": [
-                                      {
-                                        "nome": "IDENTIFIER",
-                                        "ordem": 0,
-                                        "filhos": [
-                                          {
-                                            "nome": "i",
-                                            "ordem": 0,
-                                            "filhos": []
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "nome": "OPERATOR",
-                                        "ordem": 1,
-                                        "filhos": [
-                                          {
-                                            "nome": "=",
-                                            "ordem": 0,
-                                            "filhos": [],
-                                            "linha": 5,
-                                            "coluna": 11
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "nome": "expressao",
-                                        "ordem": 2,
-                                        "filhos": [
-                                          {
-                                            "nome": "termo",
-                                            "ordem": 0,
-                                            "filhos": [
-                                              {
-                                                "nome": "IDENTIFIER",
-                                                "ordem": 0,
-                                                "filhos": [
-                                                  {
-                                                    "nome": "i",
-                                                    "ordem": 0,
-                                                    "filhos": []
-                                                  }
-                                                ]
-                                              }
-                                            ]
-                                          },
-                                          {
-                                            "nome": "OPERATOR",
-                                            "ordem": 1,
-                                            "filhos": [
-                                              {
-                                                "nome": "+",
-                                                "ordem": 0,
-                                                "filhos": [],
-                                                "linha": 5,
-                                                "coluna": 15
-                                              }
-                                            ]
-                                          },
-                                          {
-                                            "nome": "termo",
-                                            "ordem": 2,
-                                            "filhos": [
-                                              {
-                                                "nome": "INTEGER",
-                                                "ordem": 0,
-                                                "filhos": [
-                                                  {
-                                                    "nome": "1",
-                                                    "ordem": 0,
-                                                    "filhos": [],
-                                                    "linha": 5,
-                                                    "coluna": 17
-                                                  }
-                                                ]
-                                              }
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "nome": "SYMBOL",
-                                        "ordem": 3,
-                                        "filhos": [
-                                          {
-                                            "nome": ";",
-                                            "ordem": 0,
-                                            "filhos": [],
-                                            "linha": 5,
-                                            "coluna": 18
-                                          }
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "nome": "SYMBOL",
-                                "ordem": 2,
-                                "filhos": [
-                                  {
-                                    "nome": "}",
-                                    "ordem": 0,
-                                    "filhos": [],
-                                    "linha": 6,
-                                    "coluna": 5
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "nome": "declaracao",
-                    "ordem": 3,
                     "filhos": [
                       {
                         "nome": "declaracaoReturn",
@@ -482,7 +194,37 @@
                                     "ordem": 0,
                                     "filhos": [
                                       {
-                                        "nome": "i",
+                                        "nome": "n",
+                                        "ordem": 0,
+                                        "filhos": []
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "nome": "OPERATOR",
+                                "ordem": 1,
+                                "filhos": [
+                                  {
+                                    "nome": "*",
+                                    "ordem": 0,
+                                    "filhos": [],
+                                    "linha": 2,
+                                    "coluna": 14
+                                  }
+                                ]
+                              },
+                              {
+                                "nome": "termo",
+                                "ordem": 2,
+                                "filhos": [
+                                  {
+                                    "nome": "IDENTIFIER",
+                                    "ordem": 0,
+                                    "filhos": [
+                                      {
+                                        "nome": "m",
                                         "ordem": 0,
                                         "filhos": []
                                       }
@@ -500,8 +242,8 @@
                                 "nome": ";",
                                 "ordem": 0,
                                 "filhos": [],
-                                "linha": 8,
-                                "coluna": 13
+                                "linha": 2,
+                                "coluna": 17
                               }
                             ]
                           }
@@ -511,13 +253,13 @@
                   },
                   {
                     "nome": "SYMBOL",
-                    "ordem": 4,
+                    "ordem": 2,
                     "filhos": [
                       {
                         "nome": "}",
                         "ordem": 0,
                         "filhos": [],
-                        "linha": 9,
+                        "linha": 3,
                         "coluna": 1
                       }
                     ]
@@ -544,7 +286,7 @@
                     "nome": "int",
                     "ordem": 0,
                     "filhos": [],
-                    "linha": 11,
+                    "linha": 5,
                     "coluna": 1
                   }
                 ]
@@ -557,7 +299,7 @@
                     "nome": "x",
                     "ordem": 0,
                     "filhos": [],
-                    "linha": 11,
+                    "linha": 5,
                     "coluna": 5
                   }
                 ]
@@ -570,7 +312,7 @@
                     "nome": "=",
                     "ordem": 0,
                     "filhos": [],
-                    "linha": 11,
+                    "linha": 5,
                     "coluna": 7
                   }
                 ]
@@ -606,7 +348,7 @@
                                 "nome": "(",
                                 "ordem": 0,
                                 "filhos": [],
-                                "linha": 11,
+                                "linha": 5,
                                 "coluna": 15
                               }
                             ]
@@ -628,11 +370,49 @@
                                         "ordem": 0,
                                         "filhos": [
                                           {
+                                            "nome": "2",
+                                            "ordem": 0,
+                                            "filhos": [],
+                                            "linha": 5,
+                                            "coluna": 16
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "nome": "SYMBOL",
+                                "ordem": 1,
+                                "filhos": [
+                                  {
+                                    "nome": ",",
+                                    "ordem": 0,
+                                    "filhos": [],
+                                    "linha": 5,
+                                    "coluna": 17
+                                  }
+                                ]
+                              },
+                              {
+                                "nome": "expressao",
+                                "ordem": 2,
+                                "filhos": [
+                                  {
+                                    "nome": "termo",
+                                    "ordem": 0,
+                                    "filhos": [
+                                      {
+                                        "nome": "INTEGER",
+                                        "ordem": 0,
+                                        "filhos": [
+                                          {
                                             "nome": "3",
                                             "ordem": 0,
                                             "filhos": [],
-                                            "linha": 11,
-                                            "coluna": 16
+                                            "linha": 5,
+                                            "coluna": 19
                                           }
                                         ]
                                       }
@@ -650,8 +430,8 @@
                                 "nome": ")",
                                 "ordem": 0,
                                 "filhos": [],
-                                "linha": 11,
-                                "coluna": 17
+                                "linha": 5,
+                                "coluna": 20
                               }
                             ]
                           }
@@ -669,8 +449,8 @@
                     "nome": ";",
                     "ordem": 0,
                     "filhos": [],
-                    "linha": 11,
-                    "coluna": 18
+                    "linha": 5,
+                    "coluna": 21
                   }
                 ]
               }
