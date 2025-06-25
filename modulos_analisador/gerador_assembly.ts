@@ -169,6 +169,18 @@ export function gerarAssembly(no: TreeNode): string[] {
                             `\tsub ${novoReg}, ${reg}, ${proximoResultado.reg}`,
                             `\tsltu ${novoReg}, zero, ${novoReg}`
                         );
+                    } else if (operador === "and") {
+                        // AND lógico: se ambos forem diferentes de zero, resultado é 1
+                        codigo.push(
+                            `\tand ${novoReg}, ${reg}, ${proximoResultado.reg}`,
+                            `\tsltu ${novoReg}, zero, ${novoReg}`
+                        );
+                    } else if (operador === "or") {
+                        // OR lógico: se pelo menos um for diferente de zero, resultado é 1
+                        codigo.push(
+                            `\tor ${novoReg}, ${reg}, ${proximoResultado.reg}`,
+                            `\tsltu ${novoReg}, zero, ${novoReg}`
+                        );
                     }
 
                     liberarRegistrador(reg);
@@ -184,170 +196,202 @@ export function gerarAssembly(no: TreeNode): string[] {
 
     function gerarDeclaracao(no: TreeNode) {
         if (no.nome === "declaracao") {
-            const declaracao = no.filhos[0];
-            if (declaracao.nome === "declaracaoVariavel") {
-                const identificador = declaracao.filhos.find(
-                    (f) => f.nome === "IDENTIFIER"
-                )?.filhos[0].nome;
-                const expressao = declaracao.filhos.find(
-                    (f) => f.nome === "expressao"
-                );
-
-                if (expressao && identificador) {
-                    const resultado = gerarExpressao(expressao);
-                    codigo.push(...resultado.codigo);
-                    const enderecoReg = novoRegistrador();
-                    codigo.push(
-                        `\tla ${enderecoReg}, ${identificador}`,
-                        `\tsw ${resultado.reg}, (${enderecoReg})`
-                    );
-                    liberarRegistrador(enderecoReg);
-                    liberarRegistrador(resultado.reg);
-                }
-            } else if (declaracao.nome === "declaracaoFuncao") {
-                const identificador = declaracao.filhos.find(
-                    (f) => f.nome === "IDENTIFIER"
-                )?.filhos[0].nome;
-                const bloco = declaracao.filhos.find((f) => f.nome === "bloco");
-
-                if (identificador) {
-                    codigo.push(`fun_${identificador}:`);
-
-                    const parametros = declaracao.filhos.find(
-                        (f) => f.nome === "parametros"
+            no.filhos.forEach((declaracao) => {
+                if (declaracao.nome === "declaracaoVariavel") {
+                    const identificador = declaracao.filhos.find(
+                        (f) => f.nome === "IDENTIFIER"
+                    )?.filhos[0].nome;
+                    const expressao = declaracao.filhos.find(
+                        (f) => f.nome === "expressao"
                     );
 
-                    // Limpa o mapa de parâmetros da função anterior
-                    parametrosFuncaoAtual.clear();
-
-                    let parametrosRegistradores: string[] = [];
-                    let parametrosArgumentos: string[] = [];
-                    if (parametros) {
-                        const nomesParametros = parametros.filhos
-                            .filter((f) => f.nome === "IDENTIFIER")
-                            .map((f) => f.filhos[0].nome);
-
-                        parametrosRegistradores = nomesParametros.map(
-                            (nomeParametro) => {
-                                const reg = novoRegistrador();
-                                const arg = novoArgumento();
-                                codigo.push(`\tmv ${reg}, ${arg}`);
-
-                                parametrosArgumentos.push(arg);
-
-                                // Mapeia o nome do parâmetro para o registrador
-                                parametrosFuncaoAtual.set(nomeParametro, reg);
-
-                                return reg;
-                            }
+                    if (expressao && identificador) {
+                        const resultado = gerarExpressao(expressao);
+                        codigo.push(...resultado.codigo);
+                        const enderecoReg = novoRegistrador();
+                        codigo.push(
+                            `\tla ${enderecoReg}, ${identificador}`,
+                            `\tsw ${resultado.reg}, (${enderecoReg})`
                         );
+                        liberarRegistrador(enderecoReg);
+                        liberarRegistrador(resultado.reg);
+                    }
+                } else if (declaracao.nome === "declaracaoFuncao") {
+                    const identificador = declaracao.filhos.find(
+                        (f) => f.nome === "IDENTIFIER"
+                    )?.filhos[0].nome;
+                    const bloco = declaracao.filhos.find(
+                        (f) => f.nome === "bloco"
+                    );
+
+                    if (identificador) {
+                        codigo.push(`fun_${identificador}:`);
+
+                        const parametros = declaracao.filhos.find(
+                            (f) => f.nome === "parametros"
+                        );
+
+                        // Limpa o mapa de parâmetros da função anterior
+                        parametrosFuncaoAtual.clear();
+
+                        let parametrosRegistradores: string[] = [];
+                        let parametrosArgumentos: string[] = [];
+                        if (parametros) {
+                            const nomesParametros = parametros.filhos
+                                .filter((f) => f.nome === "IDENTIFIER")
+                                .map((f) => f.filhos[0].nome);
+
+                            parametrosRegistradores = nomesParametros.map(
+                                (nomeParametro) => {
+                                    const reg = novoRegistrador();
+                                    const arg = novoArgumento();
+                                    codigo.push(`\tmv ${reg}, ${arg}`);
+
+                                    parametrosArgumentos.push(arg);
+
+                                    // Mapeia o nome do parâmetro para o registrador
+                                    parametrosFuncaoAtual.set(
+                                        nomeParametro,
+                                        reg
+                                    );
+
+                                    return reg;
+                                }
+                            );
+                        }
+
+                        gerarBloco(bloco!);
+
+                        // Libera os registradores dos parâmetros
+                        parametrosRegistradores.forEach((reg) => {
+                            liberarRegistrador(reg);
+                        });
+
+                        parametrosArgumentos.forEach((arg) => {
+                            liberarArgumento(arg);
+                        });
+
+                        // Limpa o mapa de parâmetros ao sair da função
+                        parametrosFuncaoAtual.clear();
+                    }
+                } else if (declaracao.nome === "declaracaoWhile") {
+                    const expressao = declaracao.filhos.find(
+                        (f) => f.nome === "expressao"
+                    );
+                    const bloco = declaracao.filhos.find(
+                        (f) => f.nome === "bloco"
+                    );
+
+                    if (expressao && bloco) {
+                        const inicioLabel = novoLabel();
+                        const fimLabel = novoLabel();
+
+                        // Label de início do loop
+                        codigo.push(`${inicioLabel}:`);
+
+                        // Gera a condição (a expressão do while é uma comparação)
+                        const resultadoCondicao = gerarExpressao(expressao);
+                        codigo.push(...resultadoCondicao.codigo);
+
+                        // A expressão já retorna o resultado da comparação (0 ou 1)
+                        // Se a condição for falsa (0), pula para o fim
+                        codigo.push(
+                            `\tbeqz ${resultadoCondicao.reg}, ${fimLabel}`
+                        );
+                        liberarRegistrador(resultadoCondicao.reg);
+
+                        // Gera o corpo do loop
+                        gerarBloco(bloco);
+
+                        // Volta para o início do loop
+                        codigo.push(`\tj ${inicioLabel}`);
+
+                        // Label de fim do loop
+                        codigo.push(`${fimLabel}:`);
+                    }
+                } else if (declaracao.nome === "atribuicao") {
+                    const identificador = declaracao.filhos.find(
+                        (f) => f.nome === "IDENTIFIER"
+                    )?.filhos[0].nome;
+                    const expressao = declaracao.filhos.find(
+                        (f) => f.nome === "expressao"
+                    );
+
+                    if (identificador && expressao) {
+                        const resultado = gerarExpressao(expressao);
+                        codigo.push(...resultado.codigo);
+
+                        const enderecoReg = novoRegistrador();
+                        codigo.push(
+                            `\tla ${enderecoReg}, ${identificador}`,
+                            `\tsw ${resultado.reg}, (${enderecoReg})`
+                        );
+                        liberarRegistrador(enderecoReg);
+                        liberarRegistrador(resultado.reg);
+                    }
+                } else if (declaracao.nome === "declaracaoIf") {
+                    const expressao = declaracao.filhos.find(
+                        (f) => f.nome === "expressao"
+                    );
+                    const blocoIf = declaracao.filhos.find(
+                        (f) => f.nome === "blocoIf"
+                    );
+                    const blocoElse = declaracao.filhos.find(
+                        (f) => f.nome === "blocoElse"
+                    );
+                    const bloco = declaracao.filhos.find(
+                        (f) => f.nome === "bloco"
+                    ); // Compatibilidade
+
+                    if (expressao && (blocoIf || bloco)) {
+                        const labelFim = novoLabel();
+                        const labelElse = blocoElse ? novoLabel() : labelFim;
+
+                        // Gera a condição
+                        const resultadoCondicao = gerarExpressao(expressao);
+                        codigo.push(...resultadoCondicao.codigo);
+
+                        // Se a condição for falsa (0), pula para o else ou fim
+                        codigo.push(
+                            `\tbeqz ${resultadoCondicao.reg}, ${labelElse}`
+                        );
+                        liberarRegistrador(resultadoCondicao.reg);
+
+                        // Gera o corpo do if
+                        if (blocoIf) {
+                            gerarBloco(blocoIf.filhos[0]);
+                        } else if (bloco) {
+                            gerarBloco(bloco);
+                        }
+
+                        // Se tem else, pula para o fim após executar o if
+                        if (blocoElse) {
+                            codigo.push(`\tj ${labelFim}`);
+                            codigo.push(`${labelElse}:`);
+                            gerarBloco(blocoElse.filhos[0]);
+                        }
+
+                        // Label de fim do if/else
+                        codigo.push(`${labelFim}:`);
+                    }
+                } else if (declaracao.nome === "declaracaoReturn") {
+                    const expressao = declaracao.filhos.find(
+                        (f) => f.nome === "expressao"
+                    );
+
+                    if (expressao) {
+                        const resultado = gerarExpressao(expressao);
+                        codigo.push(...resultado.codigo);
+
+                        // Move o resultado para registrador de retorno
+                        codigo.push(`\tmv a0, ${resultado.reg}`);
+                        liberarRegistrador(resultado.reg);
                     }
 
-                    gerarBloco(bloco!);
-
-                    // Libera os registradores dos parâmetros
-                    parametrosRegistradores.forEach((reg) => {
-                        liberarRegistrador(reg);
-                    });
-
-                    parametrosArgumentos.forEach((arg) => {
-                        liberarArgumento(arg);
-                    });
-
-                    // Limpa o mapa de parâmetros ao sair da função
-                    parametrosFuncaoAtual.clear();
+                    // Retorna da função
+                    codigo.push(`\tret`);
                 }
-            } else if (declaracao.nome === "declaracaoWhile") {
-                const expressao = declaracao.filhos.find(
-                    (f) => f.nome === "expressao"
-                );
-                const bloco = declaracao.filhos.find((f) => f.nome === "bloco");
-
-                if (expressao && bloco) {
-                    const inicioLabel = novoLabel();
-                    const fimLabel = novoLabel();
-
-                    // Label de início do loop
-                    codigo.push(`${inicioLabel}:`);
-
-                    // Gera a condição (a expressão do while é uma comparação)
-                    const resultadoCondicao = gerarExpressao(expressao);
-                    codigo.push(...resultadoCondicao.codigo);
-
-                    // A expressão já retorna o resultado da comparação (0 ou 1)
-                    // Se a condição for falsa (0), pula para o fim
-                    codigo.push(`\tbeqz ${resultadoCondicao.reg}, ${fimLabel}`);
-                    liberarRegistrador(resultadoCondicao.reg);
-
-                    // Gera o corpo do loop
-                    gerarBloco(bloco);
-
-                    // Volta para o início do loop
-                    codigo.push(`\tj ${inicioLabel}`);
-
-                    // Label de fim do loop
-                    codigo.push(`${fimLabel}:`);
-                }
-            } else if (declaracao.nome === "atribuicao") {
-                const identificador = declaracao.filhos.find(
-                    (f) => f.nome === "IDENTIFIER"
-                )?.filhos[0].nome;
-                const expressao = declaracao.filhos.find(
-                    (f) => f.nome === "expressao"
-                );
-
-                if (identificador && expressao) {
-                    const resultado = gerarExpressao(expressao);
-                    codigo.push(...resultado.codigo);
-
-                    const enderecoReg = novoRegistrador();
-                    codigo.push(
-                        `\tla ${enderecoReg}, ${identificador}`,
-                        `\tsw ${resultado.reg}, (${enderecoReg})`
-                    );
-                    liberarRegistrador(enderecoReg);
-                    liberarRegistrador(resultado.reg);
-                }
-            } else if (declaracao.nome === "declaracaoIf") {
-                const expressao = declaracao.filhos.find(
-                    (f) => f.nome === "expressao"
-                );
-                const bloco = declaracao.filhos.find((f) => f.nome === "bloco");
-
-                if (expressao && bloco) {
-                    const fimLabel = novoLabel();
-
-                    // Gera a condição
-                    const resultadoCondicao = gerarExpressao(expressao);
-                    codigo.push(...resultadoCondicao.codigo);
-
-                    // Se a condição for falsa (0), pula para o fim
-                    codigo.push(`\tbeqz ${resultadoCondicao.reg}, ${fimLabel}`);
-                    liberarRegistrador(resultadoCondicao.reg);
-
-                    // Gera o corpo do if
-                    gerarBloco(bloco);
-
-                    // Label de fim do if
-                    codigo.push(`${fimLabel}:`);
-                }
-            } else if (declaracao.nome === "declaracaoReturn") {
-                const expressao = declaracao.filhos.find(
-                    (f) => f.nome === "expressao"
-                );
-
-                if (expressao) {
-                    const resultado = gerarExpressao(expressao);
-                    codigo.push(...resultado.codigo);
-
-                    // Move o resultado para registrador de retorno
-                    codigo.push(`\tmv a0, ${resultado.reg}`);
-                    liberarRegistrador(resultado.reg);
-                }
-
-                // Retorna da função
-                codigo.push(`\tret`);
-            }
+            });
         }
     }
 
@@ -421,6 +465,12 @@ export function gerarAssembly(no: TreeNode): string[] {
         if (no.filhos[0].nome === "INTEGER") {
             reg = novoRegistrador();
             codigo.push(`\tli ${reg}, ${no.filhos[0].filhos[0].nome}`);
+        } else if (no.filhos[0].nome === "BOOLEAN") {
+            reg = novoRegistrador();
+            const valor = no.filhos[0].filhos[0].nome;
+            // Converter boolean para inteiro: true = 1, false = 0
+            const valorInt = valor === "true" ? 1 : 0;
+            codigo.push(`\tli ${reg}, ${valorInt}`);
         } else if (no.filhos[0].nome === "IDENTIFIER") {
             const identificador = no.filhos[0].filhos[0].nome;
 
@@ -584,19 +634,11 @@ export function gerarAssembly(no: TreeNode): string[] {
     for (const filho of no.filhos) {
         if (
             filho.nome === "declaracao" &&
-            filho.filhos[0].nome === "declaracaoVariavel"
-        ) {
-            gerarDeclaracao(filho);
-        } else if (
-            filho.nome === "declaracao" &&
-            filho.filhos[0].nome === "declaracaoWhile"
-        ) {
-            gerarDeclaracao(filho);
-        } else if (
-            filho.nome === "declaracao" &&
             filho.filhos[0].nome === "chamadaFuncao"
         ) {
             gerarChamadaFuncao(filho);
+        } else if (filho.nome === "declaracao") {
+            gerarDeclaracao(filho);
         }
     }
 

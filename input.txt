@@ -1,5 +1,8 @@
-int function funcao(int n, int m) {
-    return n * m;
-}
+int x = 5;
+int y = 12;
 
-int x = funcao(2, 3) + funcao(1, 2);
+if (x > 4 and y > 100) {
+    x = 3;
+} else {
+    y = 4;
+}

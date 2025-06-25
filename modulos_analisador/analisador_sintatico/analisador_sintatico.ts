@@ -376,15 +376,44 @@ const declaracaoIf = (
         "Esperado ')' após expressão",
         nodeDeclaracaoIf.filhos
     );
-    estadoAtual = bloco(estadoAtual, nodeDeclaracaoIf.filhos);
+
+    // Criar nó específico para o bloco do if
+    const nodeBlocoIf: TreeNode = {
+        nome: "blocoIf",
+        ordem: nodeDeclaracaoIf.filhos.length,
+        filhos: [],
+    };
+    nodeDeclaracaoIf.filhos.push(nodeBlocoIf);
+    estadoAtual = bloco(estadoAtual, nodeBlocoIf.filhos);
 
     // Verificar se tem else (opcional)
     if (
         verificarTipo(estadoAtual, "KEYWORD") &&
         estadoAtual.tokenAtual?.valor === "else"
     ) {
-        estadoAtual = avancar(estadoAtual);
-        estadoAtual = bloco(estadoAtual, nodeDeclaracaoIf.filhos);
+        // Adicionar nó do else
+        nodeDeclaracaoIf.filhos.push({
+            nome: "KEYWORD",
+            ordem: nodeDeclaracaoIf.filhos.length,
+            filhos: [
+                {
+                    nome: "else",
+                    ordem: 0,
+                    filhos: [],
+                },
+            ],
+        });
+
+        estadoAtual = avancar(estadoAtual); // Consome o 'else'
+
+        // Criar nó específico para o bloco do else
+        const nodeBlocoElse: TreeNode = {
+            nome: "blocoElse",
+            ordem: nodeDeclaracaoIf.filhos.length,
+            filhos: [],
+        };
+        nodeDeclaracaoIf.filhos.push(nodeBlocoElse);
+        estadoAtual = bloco(estadoAtual, nodeBlocoElse.filhos);
     }
 
     return estadoAtual;
@@ -755,7 +784,7 @@ const expressao = (
 
     while (
         verificarTipo(estadoAtual, "OPERATOR") &&
-        ["==", "!=", "<", ">", "<=", ">=", "+", "-", "*", "/"].includes(
+        ["==", "!=", "<", ">", "<=", ">=", "+", "-", "*", "/", "and", "or"].includes(
             estadoAtual.tokenAtual?.valor || ""
         )
     ) {

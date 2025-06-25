@@ -28,8 +28,13 @@ export function gerarTAC(no: TreeNode): string[] {
 
         if (no.nome === "expressao") {
             // Primeiro, processa todas as subexpressões em parênteses
-            const subexpressoes = no.filhos.filter(f => f.nome === "expressao");
-            const resultadosSubexpressoes = new Map<number, { codigo: string[]; temp: string }>();
+            const subexpressoes = no.filhos.filter(
+                (f) => f.nome === "expressao"
+            );
+            const resultadosSubexpressoes = new Map<
+                number,
+                { codigo: string[]; temp: string }
+            >();
 
             subexpressoes.forEach((subexp, index) => {
                 const resultado = gerarExpressao(subexp);
@@ -40,7 +45,9 @@ export function gerarTAC(no: TreeNode): string[] {
             const operadores = no.filhos
                 .filter((f) => f.nome === "OPERATOR")
                 .map((f) => f.filhos[0].nome);
-            const termos = no.filhos.filter((f) => f.nome === "termo" || f.nome === "expressao");
+            const termos = no.filhos.filter(
+                (f) => f.nome === "termo" || f.nome === "expressao"
+            );
 
             if (termos.length === 1) {
                 if (termos[0].nome === "expressao") {
@@ -68,7 +75,9 @@ export function gerarTAC(no: TreeNode): string[] {
 
                         let proximoResultado;
                         if (termos[i + 1].nome === "expressao") {
-                            proximoResultado = resultadosSubexpressoes.get(i + 1)!;
+                            proximoResultado = resultadosSubexpressoes.get(
+                                i + 1
+                            )!;
                             codigo.push(...proximoResultado.codigo);
                         } else {
                             proximoResultado = gerarTermo(termos[i + 1]);
@@ -86,16 +95,20 @@ export function gerarTAC(no: TreeNode): string[] {
                         // Atualiza os termos e operadores
                         termos.splice(i, 2, {
                             nome: "termo",
-                            filhos: [{
-                                nome: "TEMP",
-                                filhos: [{
-                                    nome: novoTempVar,
+                            filhos: [
+                                {
+                                    nome: "TEMP",
+                                    filhos: [
+                                        {
+                                            nome: novoTempVar,
+                                            ordem: 0,
+                                            filhos: [],
+                                        },
+                                    ],
                                     ordem: 0,
-                                    filhos: []
-                                }],
-                                ordem: 0
-                            }],
-                            ordem: 0
+                                },
+                            ],
+                            ordem: 0,
                         });
                         operadores.splice(i, 1);
                     } else {
@@ -145,7 +158,7 @@ export function gerarTAC(no: TreeNode): string[] {
         let temp = "";
 
         // Verifica se o termo contém uma expressão (parênteses)
-        const subexpressao = no.filhos.find(f => f.nome === "expressao");
+        const subexpressao = no.filhos.find((f) => f.nome === "expressao");
         if (subexpressao) {
             const resultado = gerarExpressao(subexpressao);
             codigo.push(...resultado.codigo);
@@ -154,7 +167,7 @@ export function gerarTAC(no: TreeNode): string[] {
         }
 
         // Verifica se é uma chamada de função
-        const chamadaFuncao = no.filhos.find(f => f.nome === "chamadaFuncao");
+        const chamadaFuncao = no.filhos.find((f) => f.nome === "chamadaFuncao");
         if (chamadaFuncao) {
             const identificador = chamadaFuncao.filhos.find(
                 (f) => f.nome === "IDENTIFIER"
@@ -222,9 +235,7 @@ export function gerarTAC(no: TreeNode): string[] {
                 const parametros = declaracao.filhos.find(
                     (f) => f.nome === "parametros"
                 );
-                const bloco = declaracao.filhos.find(
-                    (f) => f.nome === "bloco"
-                );
+                const bloco = declaracao.filhos.find((f) => f.nome === "bloco");
 
                 if (identificador) {
                     codigo.push(`function ${identificador}:`);

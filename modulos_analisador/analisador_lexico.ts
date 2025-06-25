@@ -3,13 +3,13 @@
  * ser identificado no código fonte recebido como entrada
  */
 const tokenRegex = {
-    KEYWORD: /\b(if|while|return|function)\b/,
+    KEYWORD: /\b(if|else|while|return|function)\b/,
     TYPE: /\b(int|string|boolean)\b/,
     BOOLEAN: /\b(true|false)\b/,
+    OPERATOR: /!=|==|<=|>=|[+\-=*></]|and|or/,
     IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/,
     INTEGER: /\b\d+\b/,
     STRING: /"[^"]*"/,
-    OPERATOR: /!=|==|<=|>=|[+\-=*></]/,
     SYMBOL: /[;(){},]/,
     WHITESPACE: /\s+/,
     INVALID: /[^a-zA-Z0-9_+\-*/;(){}\s"]/,

@@ -273,8 +273,22 @@ function analisarExpressao(
             const tipoEsquerda = termos[i].tipo;
             const tipoDireita = termos[i + 1].tipo;
 
+            // Operadores lógicos (and, or) sempre retornam boolean
+            if (["and", "or"].includes(op)) {
+                // Para operadores lógicos, ambos os lados devem ser boolean
+                if (tipoEsquerda !== "boolean" || tipoDireita !== "boolean") {
+                    adicionarErro(
+                        estado,
+                        `Operador '${op}' só pode ser aplicado a valores do tipo boolean, encontrado: ${tipoEsquerda} e ${tipoDireita}`,
+                        linha,
+                        coluna
+                    );
+                }
+                // O resultado é boolean para operadores lógicos
+                return { tipo: "boolean" };
+            }
             // Operadores de comparação (==, !=, <, >, <=, >=) sempre retornam boolean
-            if (["==", "!=", "<", ">", "<=", ">="].includes(op)) {
+            else if (["==", "!=", "<", ">", "<=", ">="].includes(op)) {
                 // Para operadores de comparação, os tipos devem ser compatíveis entre si
                 if (!tiposCompativeis(tipoEsquerda, tipoDireita)) {
                     adicionarErro(
@@ -422,10 +436,8 @@ function analisarChamadaFuncao(
                     ) {
                         adicionarErro(
                             estado,
-                            `Incompatibilidade de tipos no argumento ${
-                                i + 1
-                            } da função '${nomeFuncao}': esperado ${
-                                simbolo.parametros[i].tipo
+                            `Incompatibilidade de tipos no argumento ${i + 1
+                            } da função '${nomeFuncao}': esperado ${simbolo.parametros[i].tipo
                             }, encontrado ${argumentosExpressao[i].tipo}`,
                             linha,
                             coluna
@@ -604,7 +616,14 @@ function analisarDeclaracaoIf(estado: EstadoSemantico, no: TreeNode): void {
                     coluna
                 );
             }
+        } else if (filho.nome === "blocoIf") {
+            // Analisar o bloco do if
+            analisarBloco(estado, filho);
+        } else if (filho.nome === "blocoElse") {
+            // Analisar o bloco do else
+            analisarBloco(estado, filho);
         } else if (filho.nome === "bloco") {
+            // Manter compatibilidade com a estrutura antiga
             analisarBloco(estado, filho);
         }
     }
