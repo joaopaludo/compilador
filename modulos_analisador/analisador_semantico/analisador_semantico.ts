@@ -191,6 +191,29 @@ function analisarTermo(
     estado: EstadoSemantico,
     no: TreeNode
 ): { tipo: TipoDado } {
+    // Verificar se é uma negação (operador unário "no")
+    if (no.filhos.length > 0 && no.filhos[0].nome === "OPERATOR" && no.filhos[0].filhos[0].nome === "no") {
+        // O operador "no" deve ter exatamente dois filhos: o operador e o termo negado
+        if (no.filhos.length === 2) {
+            const termoNegado = analisarTermo(estado, no.filhos[1]);
+            const linha = obterLinha(no);
+            const coluna = obterColuna(no);
+
+            // O operando da negação deve ser boolean
+            if (termoNegado.tipo !== "boolean") {
+                adicionarErro(
+                    estado,
+                    `Operador 'no' só pode ser aplicado a valores do tipo boolean, encontrado: ${termoNegado.tipo}`,
+                    linha,
+                    coluna
+                );
+            }
+
+            // O resultado da negação é sempre boolean
+            return { tipo: "boolean" };
+        }
+    }
+
     for (const filho of no.filhos) {
         if (filho.nome === "INTEGER") {
             return { tipo: "int" };

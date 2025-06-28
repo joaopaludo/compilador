@@ -6,7 +6,7 @@ const tokenRegex = {
     KEYWORD: /\b(if|else|while|return|function)\b/,
     TYPE: /\b(int|string|boolean)\b/,
     BOOLEAN: /\b(true|false)\b/,
-    OPERATOR: /!=|==|<=|>=|[+\-=*></]|and|or/,
+    OPERATOR: /!=|==|<=|>=|[+\-=*></]|and|or|no/,
     IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/,
     INTEGER: /\b\d+\b/,
     STRING: /"[^"]*"/,

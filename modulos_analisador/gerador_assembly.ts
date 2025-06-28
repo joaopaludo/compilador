@@ -5,6 +5,7 @@ let registradoresLivres: number[] = [];
 let argumentoAtual = 0;
 let argumentosLivres: number[] = [];
 let labelCounter = 0;
+let funcaoAtual: string | null = null; // Rastreia a função atual
 
 // Mapa para rastrear parâmetros da função atual
 let parametrosFuncaoAtual = new Map<string, string>();
@@ -38,11 +39,15 @@ function liberarArgumento(reg: string) {
 }
 
 function novoLabel(): string {
-    return `label_${labelCounter++}`;
+    const prefixo = funcaoAtual ? `${funcaoAtual}_` : "";
+    return `${prefixo}label_${labelCounter++}`;
 }
 
 export function gerarAssembly(no: TreeNode): string[] {
     const codigo: string[] = [".data"];
+
+    // Inicializa o escopo global (sem função atual)
+    funcaoAtual = null;
 
     // Mapa para rastrear registradores associados a variáveis
     const variaveisDeclaradas = new Set<string>();
@@ -225,6 +230,9 @@ export function gerarAssembly(no: TreeNode): string[] {
                     );
 
                     if (identificador) {
+                        // Define a função atual para definir prefixo das labels
+                        funcaoAtual = identificador;
+
                         codigo.push(`fun_${identificador}:`);
 
                         const parametros = declaracao.filhos.find(
@@ -271,8 +279,9 @@ export function gerarAssembly(no: TreeNode): string[] {
                             liberarArgumento(arg);
                         });
 
-                        // Limpa o mapa de parâmetros ao sair da função
+                        // Limpa o mapa de parâmetros e a função atual ao sair da função
                         parametrosFuncaoAtual.clear();
+                        funcaoAtual = null;
                     }
                 } else if (declaracao.nome === "declaracaoWhile") {
                     const expressao = declaracao.filhos.find(
@@ -450,6 +459,27 @@ export function gerarAssembly(no: TreeNode): string[] {
         const codigo: string[] = [];
         let reg = "";
 
+        // Verificar se é uma negação (operador unário "no")
+        if (
+            no.filhos.length > 0 &&
+            no.filhos[0].nome === "OPERATOR" &&
+            no.filhos[0].filhos[0].nome === "no"
+        ) {
+            // O operador "no" deve ter exatamente dois filhos: o operador e o termo negado
+            if (no.filhos.length === 2) {
+                // Gera o código para o termo que está sendo negado
+                const resultadoTermo = gerarTermo(no.filhos[1]);
+                codigo.push(...resultadoTermo.codigo);
+
+                // Aplica a negação: inverte o valor (0 vira 1, 1 vira 0)
+                reg = novoRegistrador();
+                codigo.push(`\txori ${reg}, ${resultadoTermo.reg}, 1`);
+
+                liberarRegistrador(resultadoTermo.reg);
+                return { codigo, reg };
+            }
+        }
+
         // Verifica se é uma chamada de função
         const chamadaFuncao = no.filhos.find((f) => f.nome === "chamadaFuncao");
         if (chamadaFuncao) {
@@ -623,6 +653,7 @@ export function gerarAssembly(no: TreeNode): string[] {
             gerarDeclaracao(filho);
         }
     }
+    funcaoAtual = null; // Reseta a função atual para o escopo global
 
     // Depois gera o código principal
     codigo.push("main:");
@@ -637,7 +668,10 @@ export function gerarAssembly(no: TreeNode): string[] {
             filho.filhos[0].nome === "chamadaFuncao"
         ) {
             gerarChamadaFuncao(filho);
-        } else if (filho.nome === "declaracao") {
+        } else if (
+            filho.nome === "declaracao" &&
+            filho.filhos[0].nome !== "declaracaoFuncao"
+        ) {
             gerarDeclaracao(filho);
         }
     }

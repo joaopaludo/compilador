@@ -10,6 +10,7 @@ const code = fs.readFileSync("input.txt", "utf-8");
 try {
     // Análise léxica
     const tokenList = identificar_tokens(code);
+    fs.writeFileSync("output/tokens.json", JSON.stringify(tokenList, null, 2));
     console.log("Análise léxica concluída com sucesso!");
 
     // Análise sintática

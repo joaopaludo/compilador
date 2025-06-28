@@ -811,7 +811,7 @@ const expressao = (
 
 /**
  * Analisa um termo
- * termo -> STRING | INTEGER | BOOLEAN | IDENTIFIER | ( expressao ) | chamadaFuncao
+ * termo -> STRING | INTEGER | BOOLEAN | IDENTIFIER | ( expressao ) | chamadaFuncao | no
  */
 const termo = (
     estado: EstadoSintatico,
@@ -826,6 +826,30 @@ const termo = (
     filhos.push(nodeTermo);
 
     let estadoAtual = estado;
+
+    // Verificar se é uma negação (operador unário "no")
+    if (
+        verificarTipo(estadoAtual, "OPERATOR") &&
+        estadoAtual.tokenAtual?.valor === "no"
+    ) {
+        nodeTermo.filhos.push({
+            nome: "OPERATOR",
+            ordem: nodeTermo.filhos.length,
+            filhos: [
+                {
+                    nome: estadoAtual.tokenAtual!.valor!,
+                    ordem: 0,
+                    filhos: [],
+                    linha: estadoAtual.tokenAtual!.linha,
+                    coluna: estadoAtual.tokenAtual!.coluna,
+                },
+            ],
+        });
+
+        estadoAtual = avancar(estadoAtual); // Consome o 'no'
+        // Recursivamente analisa o termo que está sendo negado
+        return termo(estadoAtual, nodeTermo.filhos);
+    }
 
     if (
         verificarTipo(estadoAtual, "STRING") ||
