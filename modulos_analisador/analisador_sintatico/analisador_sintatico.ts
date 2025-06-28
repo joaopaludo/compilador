@@ -1,7 +1,5 @@
 let arvore: Array<TreeNode> = [];
 
-// TODO a ordem das operações não está sendo respeitada corretamente
-
 /**
  * Cria o estado inicial do analisador sintático
  * @param tokens Lista de tokens a serem analisados
@@ -784,9 +782,20 @@ const expressao = (
 
     while (
         verificarTipo(estadoAtual, "OPERATOR") &&
-        ["==", "!=", "<", ">", "<=", ">=", "+", "-", "*", "/", "and", "or"].includes(
-            estadoAtual.tokenAtual?.valor || ""
-        )
+        [
+            "==",
+            "!=",
+            "<",
+            ">",
+            "<=",
+            ">=",
+            "+",
+            "-",
+            "*",
+            "/",
+            "and",
+            "or",
+        ].includes(estadoAtual.tokenAtual?.valor || "")
     ) {
         nodeExpressao.filhos.push({
             nome: "OPERATOR",

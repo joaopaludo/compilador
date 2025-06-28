@@ -1,3 +1,6 @@
+Ordem de operação com parênteses
+Funciona
+
 int x = (3 + 1) * 2;
 
 int y = x + 1;
@@ -8,8 +11,33 @@ while (i < 4) {
     i = i + 1;
 }
 
+===================================================================
+
+Ordem de operação sem parênteses
+
+
+
+===================================================================
+
+Declaração e chamada de função
+Funciona
+
 int function soma(int a, int b) {
     return a + b;
 }
 
 int graxa = soma(4, 9);
+
+===================================================================
+
+Chamada dupla de função na mesma linha
+Funciona
+
+int function jorge(int p) {
+
+    return p + 2;
+}
+
+int y = jorge(2) + jorge(3);
+
+===================================================================

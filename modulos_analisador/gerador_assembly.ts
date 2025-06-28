@@ -1,7 +1,9 @@
 // Gerador de código Assembly RISC-V
 
-let registradorAtual = 0;
-let registradoresLivres: number[] = [];
+let registradorAtualT = 0;
+let registradoresLivresT: number[] = [];
+let registradorAtualS = 0;
+let registradoresLivresS: number[] = [];
 let argumentoAtual = 0;
 let argumentosLivres: number[] = [];
 let labelCounter = 0;
@@ -11,16 +13,32 @@ let funcaoAtual: string | null = null; // Rastreia a função atual
 let parametrosFuncaoAtual = new Map<string, string>();
 
 function novoRegistrador(): string {
-    if (registradoresLivres.length > 0) {
-        return `t${registradoresLivres.shift()!}`;
+    if (funcaoAtual) {
+        // Dentro de função: usar t
+        if (registradoresLivresT.length > 0) {
+            return `t${registradoresLivresT.shift()!}`;
+        }
+        return `t${registradorAtualT++}`;
+    } else {
+        // Fora de função: usar s
+        if (registradoresLivresS.length > 0) {
+            return `s${registradoresLivresS.shift()!}`;
+        }
+        return `s${registradorAtualS++}`;
     }
-    return `t${registradorAtual++}`;
 }
 
 function liberarRegistrador(reg: string) {
-    const num = parseInt(reg.substring(1));
-    if (num >= 0) {
-        registradoresLivres.push(num);
+    if (reg.startsWith('t')) {
+        const num = parseInt(reg.substring(1));
+        if (num >= 0) {
+            registradoresLivresT.push(num);
+        }
+    } else if (reg.startsWith('s')) {
+        const num = parseInt(reg.substring(1));
+        if (num >= 0) {
+            registradoresLivresS.push(num);
+        }
     }
 }
 
@@ -658,8 +676,10 @@ export function gerarAssembly(no: TreeNode): string[] {
     // Depois gera o código principal
     codigo.push("main:");
     // Reinicia os registradores temporários
-    registradorAtual = 0;
-    registradoresLivres = [];
+    registradorAtualT = 0;
+    registradoresLivresT = [];
+    registradorAtualS = 0;
+    registradoresLivresS = [];
     labelCounter = 0;
 
     for (const filho of no.filhos) {
