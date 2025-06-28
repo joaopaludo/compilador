@@ -98,122 +98,93 @@ export function gerarAssembly(no: TreeNode): string[] {
         let reg = "";
 
         if (no.nome === "expressao") {
+            // Separar termos e operadores
+            const termos = no.filhos.filter((f) => f.nome === "termo");
             const operadores = no.filhos
                 .filter((f) => f.nome === "OPERATOR")
                 .map((f) => f.filhos[0].nome);
-            const termos = no.filhos.filter((f) => f.nome === "termo");
 
+            // Se só tem um termo, retorna direto
             if (termos.length === 1) {
                 const resultado = gerarTermo(termos[0]);
                 codigo.push(...resultado.codigo);
                 reg = resultado.reg;
             } else {
-                // Primeiro processa multiplicação e divisão
-                let resultadoAtual = gerarTermo(termos[0]);
-                codigo.push(...resultadoAtual.codigo);
-                reg = resultadoAtual.reg;
-
-                for (let i = 0; i < operadores.length; i++) {
-                    const operador = operadores[i];
-
-                    // Se é multiplicação ou divisão, processa imediatamente
-                    if (operador === "*" || operador === "/") {
-                        const proximoResultado = gerarTermo(termos[i + 1]);
-                        codigo.push(...proximoResultado.codigo);
-
+                // Agrupar multiplicação/divisão primeiro
+                let fatores: { codigo: string[]; reg: string }[] = [];
+                let fatoresOperadores: string[] = [];
+                let i = 0;
+                while (i < termos.length) {
+                    // Começa com o termo atual
+                    let resultado = gerarTermo(termos[i]);
+                    let j = i;
+                    // Enquanto o próximo operador for * ou /, agrupa
+                    while (
+                        j < operadores.length &&
+                        (operadores[j] === "*" || operadores[j] === "/")
+                    ) {
+                        const prox = gerarTermo(termos[j + 1]);
                         const novoReg = novoRegistrador();
-                        if (operador === "*") {
-                            codigo.push(
-                                `\tmul ${novoReg}, ${reg}, ${proximoResultado.reg}`
-                            );
-                        } else if (operador === "/") {
-                            codigo.push(
-                                `\tdiv ${novoReg}, ${reg}, ${proximoResultado.reg}`
-                            );
+                        codigo.push(...resultado.codigo);
+                        codigo.push(...prox.codigo);
+                        if (operadores[j] === "*") {
+                            codigo.push(`\tmul ${novoReg}, ${resultado.reg}, ${prox.reg}`);
+                        } else {
+                            codigo.push(`\tdiv ${novoReg}, ${resultado.reg}, ${prox.reg}`);
                         }
-
-                        liberarRegistrador(reg);
-                        liberarRegistrador(proximoResultado.reg);
-                        reg = novoReg;
-                    } else {
-                        // Para outros operadores, apenas avança
-                        continue;
+                        liberarRegistrador(resultado.reg);
+                        liberarRegistrador(prox.reg);
+                        resultado = { codigo: [], reg: novoReg };
+                        j++;
                     }
+                    fatores.push(resultado);
+                    if (j < operadores.length) fatoresOperadores.push(operadores[j]);
+                    i = j + 1;
                 }
 
-                // Agora processa soma, subtração e comparações
-                let j = 0;
-                for (let i = 0; i < operadores.length; i++) {
-                    const operador = operadores[i];
-
-                    // Pula multiplicação e divisão que já foram processadas
-                    if (operador === "*" || operador === "/") {
-                        j++;
-                        continue;
-                    }
-
-                    const proximoResultado = gerarTermo(termos[j + 1]);
-                    codigo.push(...proximoResultado.codigo);
-
+                // Agora processa soma/subtração e comparações entre os fatores
+                reg = fatores[0].reg;
+                codigo.push(...fatores[0].codigo);
+                for (let k = 0; k < fatoresOperadores.length; k++) {
+                    const operador = fatoresOperadores[k];
+                    const prox = fatores[k + 1];
+                    codigo.push(...prox.codigo);
                     const novoReg = novoRegistrador();
+
                     if (operador === "+") {
-                        codigo.push(
-                            `\tadd ${novoReg}, ${reg}, ${proximoResultado.reg}`
-                        );
+                        codigo.push(`\tadd ${novoReg}, ${reg}, ${prox.reg}`);
                     } else if (operador === "-") {
-                        codigo.push(
-                            `\tsub ${novoReg}, ${reg}, ${proximoResultado.reg}`
-                        );
+                        codigo.push(`\tsub ${novoReg}, ${reg}, ${prox.reg}`);
                     } else if (operador === "<") {
-                        codigo.push(
-                            `\tslt ${novoReg}, ${reg}, ${proximoResultado.reg}`
-                        );
+                        codigo.push(`\tslt ${novoReg}, ${reg}, ${prox.reg}`);
                     } else if (operador === ">") {
-                        codigo.push(
-                            `\tslt ${novoReg}, ${proximoResultado.reg}, ${reg}`
-                        );
+                        codigo.push(`\tslt ${novoReg}, ${prox.reg}, ${reg}`);
                     } else if (operador === "<=") {
-                        codigo.push(
-                            `\tslt ${novoReg}, ${proximoResultado.reg}, ${reg}`,
-                            `\txori ${novoReg}, ${novoReg}, 1`
-                        );
+                        codigo.push(`\tslt ${novoReg}, ${prox.reg}, ${reg}`);
+                        codigo.push(`\txori ${novoReg}, ${novoReg}, 1`);
                     } else if (operador === ">=") {
-                        codigo.push(
-                            `\tslt ${novoReg}, ${reg}, ${proximoResultado.reg}`,
-                            `\txori ${novoReg}, ${novoReg}, 1`
-                        );
+                        codigo.push(`\tslt ${novoReg}, ${reg}, ${prox.reg}`);
+                        codigo.push(`\txori ${novoReg}, ${novoReg}, 1`);
                     } else if (operador === "==") {
-                        codigo.push(
-                            `\tsub ${novoReg}, ${reg}, ${proximoResultado.reg}`,
-                            `\tsltiu ${novoReg}, ${novoReg}, 1`
-                        );
+                        codigo.push(`\tsub ${novoReg}, ${reg}, ${prox.reg}`);
+                        codigo.push(`\tsltiu ${novoReg}, ${novoReg}, 1`);
                     } else if (operador === "!=") {
-                        codigo.push(
-                            `\tsub ${novoReg}, ${reg}, ${proximoResultado.reg}`,
-                            `\tsltu ${novoReg}, zero, ${novoReg}`
-                        );
+                        codigo.push(`\tsub ${novoReg}, ${reg}, ${prox.reg}`);
+                        codigo.push(`\tsltu ${novoReg}, zero, ${novoReg}`);
                     } else if (operador === "and") {
-                        // AND lógico: se ambos forem diferentes de zero, resultado é 1
-                        codigo.push(
-                            `\tand ${novoReg}, ${reg}, ${proximoResultado.reg}`,
-                            `\tsltu ${novoReg}, zero, ${novoReg}`
-                        );
+                        codigo.push(`\tand ${novoReg}, ${reg}, ${prox.reg}`);
+                        codigo.push(`\tsltu ${novoReg}, zero, ${novoReg}`);
                     } else if (operador === "or") {
-                        // OR lógico: se pelo menos um for diferente de zero, resultado é 1
-                        codigo.push(
-                            `\tor ${novoReg}, ${reg}, ${proximoResultado.reg}`,
-                            `\tsltu ${novoReg}, zero, ${novoReg}`
-                        );
+                        codigo.push(`\tor ${novoReg}, ${reg}, ${prox.reg}`);
+                        codigo.push(`\tsltu ${novoReg}, zero, ${novoReg}`);
                     }
 
                     liberarRegistrador(reg);
-                    liberarRegistrador(proximoResultado.reg);
+                    liberarRegistrador(prox.reg);
                     reg = novoReg;
-                    j++;
                 }
             }
         }
-
         return { codigo, reg };
     }
 
