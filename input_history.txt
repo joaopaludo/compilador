@@ -51,3 +51,17 @@ int function jorge(int p) {
 int y = jorge(2) + jorge(3);
 
 ===================================================================
+
+Atribuindo para parâmetro dentro da função
+Funciona
+
+int function incrementaParametro(int x) {
+    while(x < 3) {
+        int i = 1;
+        x = x + i;
+    }    
+
+    return x;
+}
+
+int z = incrementaParametro(2);

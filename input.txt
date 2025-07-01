@@ -1,8 +1,11 @@
-int x = 5;
-int y = 12;
+int function incrementaParametro(int x) {
+    while(x < 3) {
+        int i = 1;
+        x = x + i;
+    }    
 
-if (x > 4 and y > 100) {
-    x = 3;
-} else {
-    y = 4;
+    return x;
 }
+
+int z = incrementaParametro(2);
+

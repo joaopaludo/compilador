@@ -29,12 +29,12 @@ function novoRegistrador(): string {
 }
 
 function liberarRegistrador(reg: string) {
-    if (reg.startsWith('t')) {
+    if (reg.startsWith("t")) {
         const num = parseInt(reg.substring(1));
         if (num >= 0) {
             registradoresLivresT.push(num);
         }
-    } else if (reg.startsWith('s')) {
+    } else if (reg.startsWith("s")) {
         const num = parseInt(reg.substring(1));
         if (num >= 0) {
             registradoresLivresS.push(num);
@@ -128,9 +128,13 @@ export function gerarAssembly(no: TreeNode): string[] {
                         codigo.push(...resultado.codigo);
                         codigo.push(...prox.codigo);
                         if (operadores[j] === "*") {
-                            codigo.push(`\tmul ${novoReg}, ${resultado.reg}, ${prox.reg}`);
+                            codigo.push(
+                                `\tmul ${novoReg}, ${resultado.reg}, ${prox.reg}`
+                            );
                         } else {
-                            codigo.push(`\tdiv ${novoReg}, ${resultado.reg}, ${prox.reg}`);
+                            codigo.push(
+                                `\tdiv ${novoReg}, ${resultado.reg}, ${prox.reg}`
+                            );
                         }
                         liberarRegistrador(resultado.reg);
                         liberarRegistrador(prox.reg);
@@ -138,7 +142,8 @@ export function gerarAssembly(no: TreeNode): string[] {
                         j++;
                     }
                     fatores.push(resultado);
-                    if (j < operadores.length) fatoresOperadores.push(operadores[j]);
+                    if (j < operadores.length)
+                        fatoresOperadores.push(operadores[j]);
                     i = j + 1;
                 }
 
@@ -319,12 +324,23 @@ export function gerarAssembly(no: TreeNode): string[] {
                         const resultado = gerarExpressao(expressao);
                         codigo.push(...resultado.codigo);
 
-                        const enderecoReg = novoRegistrador();
-                        codigo.push(
-                            `\tla ${enderecoReg}, ${identificador}`,
-                            `\tsw ${resultado.reg}, (${enderecoReg})`
-                        );
-                        liberarRegistrador(enderecoReg);
+                        // Verifica se é um parâmetro da função atual
+                        if (parametrosFuncaoAtual.has(identificador)) {
+                            // Se for parâmetro, atribui diretamente ao registrador
+                            const regParametro =
+                                parametrosFuncaoAtual.get(identificador)!;
+                            codigo.push(
+                                `\tmv ${regParametro}, ${resultado.reg}`
+                            );
+                        } else {
+                            // Se for variável global, carrega o endereço e faz store
+                            const enderecoReg = novoRegistrador();
+                            codigo.push(
+                                `\tla ${enderecoReg}, ${identificador}`,
+                                `\tsw ${resultado.reg}, (${enderecoReg})`
+                            );
+                            liberarRegistrador(enderecoReg);
+                        }
                         liberarRegistrador(resultado.reg);
                     }
                 } else if (declaracao.nome === "declaracaoIf") {
@@ -495,7 +511,9 @@ export function gerarAssembly(no: TreeNode): string[] {
 
             // Verifica se é um parâmetro da função atual
             if (parametrosFuncaoAtual.has(identificador)) {
-                reg = parametrosFuncaoAtual.get(identificador)!;
+                const regParametro = parametrosFuncaoAtual.get(identificador)!;
+                reg = novoRegistrador();
+                codigo.push(`\tmv ${reg}, ${regParametro}`);
             } else if (variaveisDeclaradas.has(identificador)) {
                 reg = novoRegistrador();
                 const enderecoReg = novoRegistrador();
@@ -608,12 +626,21 @@ export function gerarAssembly(no: TreeNode): string[] {
                 const resultado = gerarExpressao(expressao);
                 codigo.push(...resultado.codigo);
 
-                const enderecoReg = novoRegistrador();
-                codigo.push(
-                    `\tla ${enderecoReg}, ${identificador}`,
-                    `\tsw ${resultado.reg}, (${enderecoReg})`
-                );
-                liberarRegistrador(enderecoReg);
+                // Verifica se é um parâmetro da função atual
+                if (parametrosFuncaoAtual.has(identificador)) {
+                    // Se for parâmetro, atribui diretamente ao registrador
+                    const regParametro =
+                        parametrosFuncaoAtual.get(identificador)!;
+                    codigo.push(`\tmv ${regParametro}, ${resultado.reg}`);
+                } else {
+                    // Se for variável global, carrega o endereço e faz store
+                    const enderecoReg = novoRegistrador();
+                    codigo.push(
+                        `\tla ${enderecoReg}, ${identificador}`,
+                        `\tsw ${resultado.reg}, (${enderecoReg})`
+                    );
+                    liberarRegistrador(enderecoReg);
+                }
                 liberarRegistrador(resultado.reg);
             }
         }
