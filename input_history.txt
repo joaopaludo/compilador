@@ -65,3 +65,23 @@ int function incrementaParametro(int x) {
 }
 
 int z = incrementaParametro(2);
+
+===================================================================
+
+Variáveis com mesmo nome em escopos diferentes
+Funciona
+
+int function jorge(int x) {
+    int z = 2;
+
+    while((x < 3) or (x == 0)) {
+        int i = 1;
+        x = x + i;
+    }
+
+    return x;
+}
+
+int z = 1;
+
+int y = jorge(2) + z;

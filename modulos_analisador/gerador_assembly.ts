@@ -69,22 +69,52 @@ export function gerarAssembly(no: TreeNode): string[] {
 
     // Mapa para rastrear registradores associados a variáveis
     const variaveisDeclaradas = new Set<string>();
+    // Novo: rastrear variáveis locais por função
+    const variaveisLocaisPorFuncao = new Map<string, Set<string>>();
+    let escopoFuncaoAtual: string | null = null;
 
     // Primeiro passo: coletar todas as variáveis e adicioná-las à seção .data
-    function coletarVariaveis(no: TreeNode) {
+    function coletarVariaveis(
+        no: TreeNode,
+        escopoFuncao: string | null = null
+    ) {
         if (no.nome === "declaracao") {
             const declaracao = no.filhos[0];
-            if (declaracao.nome === "declaracaoVariavel") {
+            if (declaracao.nome === "declaracaoFuncao") {
                 const identificador = declaracao.filhos.find(
                     (f) => f.nome === "IDENTIFIER"
                 )?.filhos[0].nome;
-                if (identificador && !variaveisDeclaradas.has(identificador)) {
-                    codigo.push(`${identificador}: .word 0`);
-                    variaveisDeclaradas.add(identificador);
+                const bloco = declaracao.filhos.find((f) => f.nome === "bloco");
+                if (identificador && bloco) {
+                    escopoFuncao = identificador;
+                    coletarVariaveis(bloco, escopoFuncao);
+                }
+            } else if (declaracao.nome === "declaracaoVariavel") {
+                const identificador = declaracao.filhos.find(
+                    (f) => f.nome === "IDENTIFIER"
+                )?.filhos[0].nome;
+                if (identificador) {
+                    let nomeVar = identificador;
+                    if (escopoFuncao) {
+                        nomeVar = `${escopoFuncao}_${identificador}`;
+                        if (!variaveisLocaisPorFuncao.has(escopoFuncao)) {
+                            variaveisLocaisPorFuncao.set(
+                                escopoFuncao,
+                                new Set()
+                            );
+                        }
+                        variaveisLocaisPorFuncao
+                            .get(escopoFuncao)!
+                            .add(identificador);
+                    }
+                    if (!variaveisDeclaradas.has(nomeVar)) {
+                        codigo.push(`${nomeVar}: .word 0`);
+                        variaveisDeclaradas.add(nomeVar);
+                    }
                 }
             }
         }
-        no.filhos.forEach(coletarVariaveis);
+        no.filhos.forEach((f) => coletarVariaveis(f, escopoFuncao));
     }
 
     coletarVariaveis(no);
@@ -208,8 +238,18 @@ export function gerarAssembly(no: TreeNode): string[] {
                         const resultado = gerarExpressao(expressao);
                         codigo.push(...resultado.codigo);
                         const enderecoReg = novoRegistrador();
+
+                        let nomeVariavel = identificador;
+                        if (
+                            funcaoAtual &&
+                            variaveisLocaisPorFuncao
+                                .get(funcaoAtual)
+                                ?.has(identificador)
+                        ) {
+                            nomeVariavel = `${funcaoAtual}_${identificador}`;
+                        }
                         codigo.push(
-                            `\tla ${enderecoReg}, ${identificador}`,
+                            `\tla ${enderecoReg}, ${nomeVariavel}`,
                             `\tsw ${resultado.reg}, (${enderecoReg})`
                         );
                         liberarRegistrador(enderecoReg);
@@ -333,10 +373,18 @@ export function gerarAssembly(no: TreeNode): string[] {
                                 `\tmv ${regParametro}, ${resultado.reg}`
                             );
                         } else {
-                            // Se for variável global, carrega o endereço e faz store
+                            let nomeVariavel = identificador;
+                            if (
+                                funcaoAtual &&
+                                variaveisLocaisPorFuncao
+                                    .get(funcaoAtual)
+                                    ?.has(identificador)
+                            ) {
+                                nomeVariavel = `${funcaoAtual}_${identificador}`;
+                            }
                             const enderecoReg = novoRegistrador();
                             codigo.push(
-                                `\tla ${enderecoReg}, ${identificador}`,
+                                `\tla ${enderecoReg}, ${nomeVariavel}`,
                                 `\tsw ${resultado.reg}, (${enderecoReg})`
                             );
                             liberarRegistrador(enderecoReg);
@@ -514,14 +562,25 @@ export function gerarAssembly(no: TreeNode): string[] {
                 const regParametro = parametrosFuncaoAtual.get(identificador)!;
                 reg = novoRegistrador();
                 codigo.push(`\tmv ${reg}, ${regParametro}`);
-            } else if (variaveisDeclaradas.has(identificador)) {
-                reg = novoRegistrador();
-                const enderecoReg = novoRegistrador();
-                codigo.push(
-                    `\tla ${enderecoReg}, ${no.filhos[0].filhos[0].nome}`,
-                    `\tlw ${reg}, (${enderecoReg})`
-                );
-                liberarRegistrador(enderecoReg);
+            } else {
+                let nomeVariavel = identificador;
+                if (
+                    funcaoAtual &&
+                    variaveisLocaisPorFuncao
+                        .get(funcaoAtual)
+                        ?.has(identificador)
+                ) {
+                    nomeVariavel = `${funcaoAtual}_${identificador}`;
+                }
+                if (variaveisDeclaradas.has(nomeVariavel)) {
+                    reg = novoRegistrador();
+                    const enderecoReg = novoRegistrador();
+                    codigo.push(
+                        `\tla ${enderecoReg}, ${nomeVariavel}`,
+                        `\tlw ${reg}, (${enderecoReg})`
+                    );
+                    liberarRegistrador(enderecoReg);
+                }
             }
         }
 
@@ -669,10 +728,10 @@ export function gerarAssembly(no: TreeNode): string[] {
             gerarDeclaracao(filho);
         }
     }
-    funcaoAtual = null; // Reseta a função atual para o escopo global
+    funcaoAtual = null; // Escopo global
 
-    // Depois gera o código principal
     codigo.push("main:");
+
     // Reinicia os registradores temporários
     registradorAtualT = 0;
     registradoresLivresT = [];
